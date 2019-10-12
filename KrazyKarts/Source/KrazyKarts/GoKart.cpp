@@ -50,7 +50,11 @@ void AGoKart::Tick(float DeltaTime)
 
 	FVector Force = GetActorForwardVector() * Throttle * MaxDrivingForce;
 
-	//UE_LOG(LogTemp, Warning, TEXT("Force = %s"), *Force.ToString());
+	Force += GetAirResistance();
+
+	UE_LOG(LogTemp, Warning, TEXT("AirResistance = %s"), *GetAirResistance().ToString());
+	//UE_LOG(LogTemp, Error, TEXT("Force = %s"), *Force.ToString());
+	UE_LOG(LogTemp, Error, TEXT("Velocity = %s"), *Velocity.ToString());
 
 	FVector Acceleration = Force / Mass;
 
@@ -61,6 +65,11 @@ void AGoKart::Tick(float DeltaTime)
 
 	ApplyRotation(DeltaTime);
 	
+}
+
+FVector AGoKart::GetAirResistance()
+{
+	return -Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient;
 }
 
 void AGoKart::ApplyRotation(float DeltaTime)
@@ -85,6 +94,7 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 		Velocity = FVector::ZeroVector;
 	}
 }
+
 
 void AGoKart::MoveForward(float Value)
 {
