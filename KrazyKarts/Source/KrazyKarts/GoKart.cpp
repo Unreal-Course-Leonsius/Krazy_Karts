@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/BoxComponent.h"
 
+
 #define OUT
 
 // Sets default values
@@ -51,6 +52,7 @@ void AGoKart::Tick(float DeltaTime)
 	FVector Force = GetActorForwardVector() * Throttle * MaxDrivingForce;
 
 	Force += GetAirResistance();
+	Force += GetRollingResistance();
 
 	UE_LOG(LogTemp, Warning, TEXT("AirResistance = %s"), *GetAirResistance().ToString());
 	//UE_LOG(LogTemp, Error, TEXT("Force = %s"), *Force.ToString());
@@ -72,6 +74,13 @@ FVector AGoKart::GetAirResistance()
 	return -Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient;
 }
 
+FVector AGoKart::GetRollingResistance()
+{
+	float AccelerationDueToGravity = -GetWorld()->GetGravityZ() / 100;
+	float NormalForce = Mass * AccelerationDueToGravity;
+	return -Velocity.GetSafeNormal() * RollingResistanceCoefficient * NormalForce;
+}
+
 void AGoKart::ApplyRotation(float DeltaTime)
 {
 	float RotationAngle = MaxDegreesPerSecond * DeltaTime * SteeringThrow;
@@ -87,7 +96,7 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 	FVector Translation = Velocity * 100 * DeltaTime;  // x = v * t
 
 	FHitResult Hit;
-	AddActorWorldOffset(Translation, true, &Hit);   // Change car's location
+	AddActorWorldOffset(Translation, true, & OUT Hit);   // Change car's location
 
 	if (Hit.IsValidBlockingHit())
 	{

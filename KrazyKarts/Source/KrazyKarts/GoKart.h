@@ -71,6 +71,10 @@ private:
 	UPROPERTY(EditAnywhere)
 	float DragCoefficient = 16;  // Air Resistance Coefficient
 
+	// Higher means more rolling resistance.
+	UPROPERTY(EditAnywhere)
+	float RollingResistanceCoefficient = 0.015;
+
 	FVector Velocity;
 
 	float Throttle;
@@ -81,5 +85,6 @@ private:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 	FVector GetAirResistance();
+	FVector GetRollingResistance();
 	
 };
