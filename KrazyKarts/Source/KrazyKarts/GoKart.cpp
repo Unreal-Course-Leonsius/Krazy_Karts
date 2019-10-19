@@ -54,9 +54,9 @@ void AGoKart::Tick(float DeltaTime)
 	Force += GetAirResistance();
 	Force += GetRollingResistance();
 
-	UE_LOG(LogTemp, Warning, TEXT("AirResistance = %s"), *GetAirResistance().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("AirResistance = %s"), *GetAirResistance().ToString());
 	//UE_LOG(LogTemp, Error, TEXT("Force = %s"), *Force.ToString());
-	UE_LOG(LogTemp, Error, TEXT("Velocity = %s"), *Velocity.ToString());
+	//UE_LOG(LogTemp, Error, TEXT("Velocity = %s"), *Velocity.ToString());
 
 	FVector Acceleration = Force / Mass;
 
@@ -83,12 +83,17 @@ FVector AGoKart::GetRollingResistance()
 
 void AGoKart::ApplyRotation(float DeltaTime)
 {
-	float RotationAngle = MaxDegreesPerSecond * DeltaTime * SteeringThrow;
-	FQuat RotationDelta(GetActorUpVector(), FMath::DegreesToRadians(RotationAngle));
+	//float RotationAngle = MaxDegreesPerSecond * DeltaTime * SteeringThrow;
+	//FQuat RotationDelta(GetActorUpVector(), FMath::DegreesToRadians(RotationAngle));
 
+	/// we get here also size of Velocity (Velocity.Size()) because DotProduct is multiply magnitude of two vectors |a| * |b| * cosO
+	float DeltaLocation = FVector::DotProduct(GetActorForwardVector(), Velocity) * DeltaTime;
+	float RotationAngle = DeltaLocation / MinTurningRadius * SteeringThrow;
+	FQuat RotationDelta(GetActorUpVector(), RotationAngle);
 	Velocity = RotationDelta.RotateVector(Velocity);
 
 	AddActorWorldRotation(RotationDelta);
+
 }
 
 void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
