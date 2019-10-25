@@ -6,6 +6,8 @@
 #include "Engine/World.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/BoxComponent.h"
+#include "Engine.h"
+#include "DrawDebugHelpers.h"
 
 
 #define OUT
@@ -41,7 +43,31 @@ void AGoKart::Setting()
 void AGoKart::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		UEngine* engine = GetGameInstance()->GetEngine();
+		engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is a Server"));
+	}
 	
+}
+
+/// we don't have here class space and this fucntion is not class member it outside of class
+FString GetEnumText(ENetRole Role)
+{
+	switch (Role)
+	{
+	case ROLE_None:
+		return "None";
+	case ROLE_SimulatedProxy:
+		return "SimulatedProxy";
+	case ROLE_AutonomousProxy:
+		return "AutonomousProxy";
+	case ROLE_Authority:
+		return "Authority";
+	default:
+		return "ERROR";
+	}
 }
 
 // Called every frame
@@ -66,6 +92,8 @@ void AGoKart::Tick(float DeltaTime)
 	
 
 	ApplyRotation(DeltaTime);
+
+	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::White, DeltaTime);
 	
 }
 
@@ -110,17 +138,6 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 }
 
 
-void AGoKart::MoveForward(float Value)
-{
-	Throttle = Value;
-}
-
-void AGoKart::MoveRight(float Value)
-{
-	SteeringThrow = Value;
-}
-
-
 // Called to bind functionality to input
 void AGoKart::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -131,6 +148,41 @@ void AGoKart::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAxis("LookUp", this, &AGoKart::Elevation);
 	PlayerInputComponent->BindAxis("LookRight", this, &AGoKart::Azimuth);
 
+}
+
+
+void AGoKart::MoveForward(float Value)
+{
+	Throttle = Value;
+	Server_MoveForward(Value);
+}
+
+
+void AGoKart::MoveRight(float Value)
+{
+	SteeringThrow = Value;
+	Server_MoveRight(Value);
+}
+
+void AGoKart::Server_MoveForward_Implementation(float Value)
+{
+	Throttle = Value;
+}
+
+bool AGoKart::Server_MoveForward_Validate(float Value)
+{
+	return FMath::Abs(Value) <= 1;
+}
+
+
+void AGoKart::Server_MoveRight_Implementation(float Value)
+{
+	SteeringThrow = Value;
+}
+
+bool AGoKart::Server_MoveRight_Validate(float Value)
+{
+	return FMath::Abs(Value) <= 1;
 }
 
 
