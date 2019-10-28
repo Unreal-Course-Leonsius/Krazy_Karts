@@ -8,6 +8,7 @@
 #include "Components/BoxComponent.h"
 #include "Engine.h"
 #include "DrawDebugHelpers.h"
+#include "UnrealNetwork.h"
 
 
 #define OUT
@@ -17,6 +18,7 @@ AGoKart::AGoKart()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
 
 }
 
@@ -93,8 +95,26 @@ void AGoKart::Tick(float DeltaTime)
 
 	ApplyRotation(DeltaTime);
 
+	if (HasAuthority())
+	{
+		ReplicatedLocation = GetActorLocation();
+		ReplicatedRotation = GetActorRotation();
+	}
+	else
+	{
+		SetActorLocation(ReplicatedLocation);
+		SetActorRotation(ReplicatedRotation);
+	}
+
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::White, DeltaTime);
 	
+}
+
+void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AGoKart, ReplicatedLocation);
+	DOREPLIFETIME(AGoKart, ReplicatedRotation);
 }
 
 FVector AGoKart::GetAirResistance()
