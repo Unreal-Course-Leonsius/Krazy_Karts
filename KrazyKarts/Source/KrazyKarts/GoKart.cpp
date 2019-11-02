@@ -48,9 +48,14 @@ void AGoKart::BeginPlay()
 
 	if (HasAuthority())
 	{
+		NetUpdateFrequency = 1;
+	}
+
+	/*if (HasAuthority())
+	{
 		UEngine* engine = GetGameInstance()->GetEngine();
 		engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is a Server"));
-	}
+	}*/
 	
 }
 
@@ -70,6 +75,11 @@ FString GetEnumText(ENetRole Role)
 	default:
 		return "ERROR";
 	}
+}
+
+void AGoKart::OnRep_ReplicatedTransform()
+{
+	SetActorTransform(ReplicatedTransform);
 }
 
 // Called every frame
@@ -97,13 +107,7 @@ void AGoKart::Tick(float DeltaTime)
 
 	if (HasAuthority())
 	{
-		ReplicatedLocation = GetActorLocation();
-		ReplicatedRotation = GetActorRotation();
-	}
-	else
-	{
-		SetActorLocation(ReplicatedLocation);
-		SetActorRotation(ReplicatedRotation);
+		ReplicatedTransform = GetActorTransform();
 	}
 
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::White, DeltaTime);
@@ -113,8 +117,8 @@ void AGoKart::Tick(float DeltaTime)
 void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AGoKart, ReplicatedLocation);
-	DOREPLIFETIME(AGoKart, ReplicatedRotation);
+	DOREPLIFETIME(AGoKart, ReplicatedTransform);
+	
 }
 
 FVector AGoKart::GetAirResistance()
@@ -169,6 +173,7 @@ void AGoKart::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAxis("LookRight", this, &AGoKart::Azimuth);
 
 }
+
 
 
 void AGoKart::MoveForward(float Value)
