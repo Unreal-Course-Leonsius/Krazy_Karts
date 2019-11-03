@@ -71,21 +71,25 @@ private:
 	UPROPERTY(EditAnywhere)
 	float RollingResistanceCoefficient = 0.015;
 
-	FVector Velocity;
-
 	UPROPERTY(ReplicatedUsing=OnRep_ReplicatedTransform)
 	FTransform ReplicatedTransform;
 	UFUNCTION()
 	void OnRep_ReplicatedTransform();
 
 	UPROPERTY(Replicated)
-	FVector ReplicatedLocation;
+	FVector Velocity;
 
 	UPROPERTY(Replicated)
-	FRotator ReplicatedRotation;
-
 	float Throttle;
+
+	UPROPERTY(Replicated)
 	float SteeringThrow;
+
+	//UPROPERTY(Replicated)
+	//FVector ReplicatedLocation;
+
+	//UPROPERTY(Replicated)
+	//FRotator ReplicatedRotation;
 
 private:
 
