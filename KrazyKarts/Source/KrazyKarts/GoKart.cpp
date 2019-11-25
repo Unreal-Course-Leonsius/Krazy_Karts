@@ -79,9 +79,10 @@ FString GetEnumText(ENetRole Role)
 	}
 }
 
-void AGoKart::OnRep_ReplicatedTransform()
+void AGoKart::OnRep_ServerState()
 {
-	SetActorTransform(ReplicatedTransform);
+	SetActorTransform(ServerState.Tranform);
+	Velocity = ServerState.Velocity;
 
 	/*auto time = GetWorld()->GetTimeSeconds();
 	UEngine* engine = GetGameInstance()->GetEngine();
@@ -99,6 +100,17 @@ void AGoKart::Tick(float DeltaTime)
 		UEngine* engine = GetGameInstance()->GetEngine();
 		engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is Only Client"));
 	}*/
+
+	if (IsLocallyControlled())
+	{
+		FGoKartMove Move;
+		Move.DeltaTime = DeltaTime;
+		Move.SteeringThrow = SteeringThrow;
+		Move.Throttle = Throttle;
+		//TODO: Set time
+
+		Server_SendMove(Move);
+	}
 	
 
 	FVector Force = GetActorForwardVector() * Throttle * MaxDrivingForce;
@@ -121,16 +133,11 @@ void AGoKart::Tick(float DeltaTime)
 
 	if (HasAuthority())
 	{
-		ReplicatedTransform = GetActorTransform();
-		//UEngine* engine = GetGameInstance()->GetEngine();
-		//engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is a Server"));
+		ServerState.Tranform = GetActorTransform();
+		ServerState.Velocity = Velocity;
+		//TODO: Update last move
 	}
-	else
-	{
-		//SetActorTransform(ReplicatedTransform);
-		//SetActorTransform(RepTran);
-	}
-
+	
 
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::White, DeltaTime);
 	
@@ -139,8 +146,7 @@ void AGoKart::Tick(float DeltaTime)
 void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AGoKart, ReplicatedTransform);
-	DOREPLIFETIME(AGoKart, Velocity);
+	DOREPLIFETIME(AGoKart, ServerState);
 	DOREPLIFETIME(AGoKart, Throttle);
 	DOREPLIFETIME(AGoKart, SteeringThrow);
 	
@@ -204,7 +210,6 @@ void AGoKart::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void AGoKart::MoveForward(float Value)
 {
 	Throttle = Value;
-	Server_MoveForward(Value);
 
 }
 
@@ -212,33 +217,21 @@ void AGoKart::MoveForward(float Value)
 void AGoKart::MoveRight(float Value)
 {
 	SteeringThrow = Value;
-	Server_MoveRight(Value);
 
 }
 
-void AGoKart::Server_MoveForward_Implementation(float Value)
+void AGoKart::Server_SendMove_Implementation(FGoKartMove Move)
 {
-	Throttle = Value;
+	Throttle = Move.Throttle;
+	SteeringThrow = Move.SteeringThrow;
 	/*UEngine* engine = GetGameInstance()->GetEngine();
 	engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is Only Client"));*/
 }
 
-bool AGoKart::Server_MoveForward_Validate(float Value)
+bool AGoKart::Server_SendMove_Validate(FGoKartMove Move)
 {
-	return FMath::Abs(Value) <= 1;
+	return true; //TODO better validation
 }
-
-
-void AGoKart::Server_MoveRight_Implementation(float Value)
-{
-	SteeringThrow = Value;
-}
-
-bool AGoKart::Server_MoveRight_Validate(float Value)
-{
-	return FMath::Abs(Value) <= 1;
-}
-
 
 void AGoKart::Azimuth(float Val)
 {
@@ -275,3 +268,28 @@ void AGoKart::Elevation(float Val)
 
 	SpringArm->SetRelativeRotation(NewRotation);
 }
+
+
+/// No more needed
+//void AGoKart::Server_MoveForward_Implementation(float Value)
+//{
+//	Throttle = Value;
+//	/*UEngine* engine = GetGameInstance()->GetEngine();
+//	engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is Only Client"));*/
+//}
+//
+//bool AGoKart::Server_MoveForward_Validate(float Value)
+//{
+//	return FMath::Abs(Value) <= 1;
+//}
+//
+//
+//void AGoKart::Server_MoveRight_Implementation(float Value)
+//{
+//	SteeringThrow = Value;
+//}
+//
+//bool AGoKart::Server_MoveRight_Validate(float Value)
+//{
+//	return FMath::Abs(Value) <= 1;
+//}
