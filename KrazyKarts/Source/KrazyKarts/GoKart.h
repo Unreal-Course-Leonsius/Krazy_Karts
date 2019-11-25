@@ -91,6 +91,9 @@ private:
 	//UPROPERTY(Replicated)
 	//FRotator ReplicatedRotation;
 
+	/*UPROPERTY(Replicated)
+	FTransform RepTran;*/
+
 private:
 
 	void MoveForward(float Value);

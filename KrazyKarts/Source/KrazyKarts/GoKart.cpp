@@ -46,6 +46,8 @@ void AGoKart::BeginPlay()
 {
 	Super::BeginPlay();
 
+	
+
 	if (HasAuthority())
 	{
 		NetUpdateFrequency = 1;
@@ -80,12 +82,24 @@ FString GetEnumText(ENetRole Role)
 void AGoKart::OnRep_ReplicatedTransform()
 {
 	SetActorTransform(ReplicatedTransform);
+
+	/*auto time = GetWorld()->GetTimeSeconds();
+	UEngine* engine = GetGameInstance()->GetEngine();
+	engine->AddOnScreenDebugMessage(-1, 5, FColor::Green, FString::Printf(TEXT("TimeUpdate = %f"), time));*/
+	
 }
 
 // Called every frame
 void AGoKart::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	/*if (IsLocallyControlled())
+	{
+		UEngine* engine = GetGameInstance()->GetEngine();
+		engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is Only Client"));
+	}*/
+	
 
 	FVector Force = GetActorForwardVector() * Throttle * MaxDrivingForce;
 
@@ -108,7 +122,15 @@ void AGoKart::Tick(float DeltaTime)
 	if (HasAuthority())
 	{
 		ReplicatedTransform = GetActorTransform();
+		//UEngine* engine = GetGameInstance()->GetEngine();
+		//engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is a Server"));
 	}
+	else
+	{
+		//SetActorTransform(ReplicatedTransform);
+		//SetActorTransform(RepTran);
+	}
+
 
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::White, DeltaTime);
 	
@@ -183,6 +205,7 @@ void AGoKart::MoveForward(float Value)
 {
 	Throttle = Value;
 	Server_MoveForward(Value);
+
 }
 
 
@@ -190,11 +213,14 @@ void AGoKart::MoveRight(float Value)
 {
 	SteeringThrow = Value;
 	Server_MoveRight(Value);
+
 }
 
 void AGoKart::Server_MoveForward_Implementation(float Value)
 {
 	Throttle = Value;
+	/*UEngine* engine = GetGameInstance()->GetEngine();
+	engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is Only Client"));*/
 }
 
 bool AGoKart::Server_MoveForward_Validate(float Value)

@@ -11,7 +11,7 @@ class AKrazyKartsGameMode : public AGameModeBase
 public:
 	AKrazyKartsGameMode();
 
-	//APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform);
+	//APawn* SpawnDefaultPawnAtTransform(AController* NewPlayer, const FTransform& SpawnTransform) override;
 
 };
 
