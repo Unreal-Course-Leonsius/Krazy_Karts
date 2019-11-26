@@ -81,7 +81,7 @@ FString GetEnumText(ENetRole Role)
 
 void AGoKart::OnRep_ServerState()
 {
-	SetActorTransform(ServerState.Tranform);
+	SetActorTransform(ServerState.Transform);
 	Velocity = ServerState.Velocity;
 
 	/*auto time = GetWorld()->GetTimeSeconds();
@@ -110,10 +110,18 @@ void AGoKart::Tick(float DeltaTime)
 		//TODO: Set time
 
 		Server_SendMove(Move);
+
+		SimulateMove(Move);
 	}
 	
 
-	FVector Force = GetActorForwardVector() * Throttle * MaxDrivingForce;
+	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::White, DeltaTime);
+	
+}
+
+void AGoKart::SimulateMove(FGoKartMove Move)
+{
+	FVector Force = GetActorForwardVector() * Move.Throttle * MaxDrivingForce;
 
 	Force += GetAirResistance();
 	Force += GetRollingResistance();
@@ -124,32 +132,19 @@ void AGoKart::Tick(float DeltaTime)
 
 	FVector Acceleration = Force / Mass;
 
-	Velocity = Velocity + Acceleration * DeltaTime;
+	Velocity = Velocity + Acceleration * Move.DeltaTime;
 
-	UpdateLocationFromVelocity(DeltaTime);
-	
+	UpdateLocationFromVelocity(Move.DeltaTime);
 
-	ApplyRotation(DeltaTime);
 
-	if (HasAuthority())
-	{
-		ServerState.Tranform = GetActorTransform();
-		ServerState.Velocity = Velocity;
-		//TODO: Update last move
-	}
-	
-
-	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::White, DeltaTime);
-	
+	ApplyRotation(Move.DeltaTime, Move.SteeringThrow);
 }
 
 void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AGoKart, ServerState);
-	DOREPLIFETIME(AGoKart, Throttle);
-	DOREPLIFETIME(AGoKart, SteeringThrow);
-	
+
 }
 
 FVector AGoKart::GetAirResistance()
@@ -164,7 +159,7 @@ FVector AGoKart::GetRollingResistance()
 	return -Velocity.GetSafeNormal() * RollingResistanceCoefficient * NormalForce;
 }
 
-void AGoKart::ApplyRotation(float DeltaTime)
+void AGoKart::ApplyRotation(float DeltaTime, float SteeringThrow)
 {
 	//float RotationAngle = MaxDegreesPerSecond * DeltaTime * SteeringThrow;
 	//FQuat RotationDelta(GetActorUpVector(), FMath::DegreesToRadians(RotationAngle));
@@ -222,8 +217,11 @@ void AGoKart::MoveRight(float Value)
 
 void AGoKart::Server_SendMove_Implementation(FGoKartMove Move)
 {
-	Throttle = Move.Throttle;
-	SteeringThrow = Move.SteeringThrow;
+	SimulateMove(Move);
+
+	ServerState.LastMove = Move;
+	ServerState.Transform = GetActorTransform();
+	ServerState.Velocity = Velocity;
 	/*UEngine* engine = GetGameInstance()->GetEngine();
 	engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is Only Client"));*/
 }

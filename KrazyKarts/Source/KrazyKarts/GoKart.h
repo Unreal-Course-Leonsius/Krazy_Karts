@@ -29,7 +29,7 @@ struct FGoKartState
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY()
-	FTransform Tranform;
+	FTransform Transform;
 
 	UPROPERTY()
 	FVector Velocity;
@@ -66,7 +66,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void ApplyRotation(float DeltaTime);
+	void ApplyRotation(float DeltaTime, float SteeringThrow);
 
 	void UpdateLocationFromVelocity(float DeltaTime);
 
@@ -104,13 +104,13 @@ private:
 	float RollingResistanceCoefficient = 0.015;
 
 
-	// No more need Replication
+	// No more need Replicated
 	FVector Velocity;
 
-	UPROPERTY(Replicated)
+	// No more need Replication
 	float Throttle;
 
-	UPROPERTY(Replicated)
+	// No more need Replication
 	float SteeringThrow;
 
 	UPROPERTY(ReplicatedUsing=OnRep_ServerState)
@@ -136,6 +136,8 @@ private:
 	FTransform RepTran;*/
 
 private:
+
+	void SimulateMove(FGoKartMove Move);
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
