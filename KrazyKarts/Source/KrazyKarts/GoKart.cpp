@@ -46,12 +46,14 @@ void AGoKart::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
+	UE_LOG(LogTemp, Error, TEXT("ActorLocation = %s"), *GetActorLocation().ToString());
 
 	if (HasAuthority())
 	{
 		NetUpdateFrequency = 1;
 	}
+
+	GameState = GetWorld()->GetGameState();
 
 	/*if (HasAuthority())
 	{
@@ -87,6 +89,8 @@ void AGoKart::OnRep_ServerState()
 	/*auto time = GetWorld()->GetTimeSeconds();
 	UEngine* engine = GetGameInstance()->GetEngine();
 	engine->AddOnScreenDebugMessage(-1, 5, FColor::Green, FString::Printf(TEXT("TimeUpdate = %f"), time));*/
+
+	ClearAcknowledgeMoves(ServerState.LastMove);
 	
 }
 
@@ -101,23 +105,74 @@ void AGoKart::Tick(float DeltaTime)
 		engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is Only Client"));
 	}*/
 
+	FVector ViewPointLocation;
+	FRotator ViewPointRotation;
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
+
+	DrawDebugLine
+	(
+		GetWorld(),
+		GetActorLocation(),
+		GetActorLocation() + (GetActorForwardVector() * 1000),
+		FColor(255, 0, 0),
+		false,
+		0.f,
+		0.f,
+		5.f
+	);
+
+
 	if (IsLocallyControlled())
 	{
-		FGoKartMove Move;
-		Move.DeltaTime = DeltaTime;
-		Move.SteeringThrow = SteeringThrow;
-		Move.Throttle = Throttle;
-		//TODO: Set time
+		FGoKartMove Move = CreateMove(DeltaTime);
+
+		if (!HasAuthority()) 
+		{
+			UnacknowledgedMoves.Add(Move);
+
+			UE_LOG(LogTemp, Warning, TEXT("Queue length: %d"), UnacknowledgedMoves.Num());
+		}
 
 		Server_SendMove(Move);
 
 		SimulateMove(Move);
 	}
 	
+	//UE_LOG(LogTemp, Warning, TEXT("ActorForwardVector = %s"), *GetActorForwardVector().ToString());
+	//UE_LOG(LogTemp, Error, TEXT("GetActorLocation = %s"), *GetActorLocation().ToString());
 
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::White, DeltaTime);
 	
 }
+
+FGoKartMove AGoKart::CreateMove(float DeltaTime)
+{
+	FGoKartMove Move;
+	Move.DeltaTime = DeltaTime;
+	Move.SteeringThrow = SteeringThrow;
+	Move.Throttle = Throttle;
+	//Move.Time = GetWorld()->TimeSeconds;
+
+	Move.Time = GameState->GetServerWorldTimeSeconds();
+
+	return Move;
+}
+
+void AGoKart::ClearAcknowledgeMoves(FGoKartMove LastMove)
+{
+	TArray<FGoKartMove> NewMoves;
+
+	for (const FGoKartMove& Move : UnacknowledgedMoves)
+	{
+		if (Move.Time > LastMove.Time)
+		{
+			NewMoves.Add(Move);
+		}
+	}
+
+	UnacknowledgedMoves = NewMoves;
+}
+
 
 void AGoKart::SimulateMove(FGoKartMove Move)
 {
@@ -140,25 +195,6 @@ void AGoKart::SimulateMove(FGoKartMove Move)
 	ApplyRotation(Move.DeltaTime, Move.SteeringThrow);
 }
 
-void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AGoKart, ServerState);
-
-}
-
-FVector AGoKart::GetAirResistance()
-{
-	return -Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient;
-}
-
-FVector AGoKart::GetRollingResistance()
-{
-	float AccelerationDueToGravity = -GetWorld()->GetGravityZ() / 100;
-	float NormalForce = Mass * AccelerationDueToGravity;
-	return -Velocity.GetSafeNormal() * RollingResistanceCoefficient * NormalForce;
-}
-
 void AGoKart::ApplyRotation(float DeltaTime, float SteeringThrow)
 {
 	//float RotationAngle = MaxDegreesPerSecond * DeltaTime * SteeringThrow;
@@ -179,13 +215,34 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 	FVector Translation = Velocity * 100 * DeltaTime;  // x = v * t
 
 	FHitResult Hit;
-	AddActorWorldOffset(Translation, true, & OUT Hit);   // Change car's location
+	AddActorWorldOffset(Translation, true, &OUT Hit);   // Change car's location
 
 	if (Hit.IsValidBlockingHit())
 	{
 		Velocity = FVector::ZeroVector;
 	}
 }
+
+
+void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AGoKart, ServerState);
+
+}
+
+FVector AGoKart::GetAirResistance()
+{
+	return -Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient;
+}
+
+FVector AGoKart::GetRollingResistance()
+{
+	float AccelerationDueToGravity = -GetWorld()->GetGravityZ() / 100;
+	float NormalForce = Mass * AccelerationDueToGravity;
+	return -Velocity.GetSafeNormal() * RollingResistanceCoefficient * NormalForce;
+}
+
 
 
 // Called to bind functionality to input

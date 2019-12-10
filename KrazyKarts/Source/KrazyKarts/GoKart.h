@@ -113,6 +113,9 @@ private:
 	// No more need Replication
 	float SteeringThrow;
 
+	TArray<FGoKartMove> UnacknowledgedMoves;
+	AGameStateBase* GameState;
+
 	UPROPERTY(ReplicatedUsing=OnRep_ServerState)
 	FGoKartState ServerState;
 	UFUNCTION()
@@ -151,6 +154,9 @@ private:
 
 	FVector GetAirResistance();
 	FVector GetRollingResistance();
+
+	FGoKartMove CreateMove(float DeltaTime);
+	void ClearAcknowledgeMoves(FGoKartMove LastMove);
 
 
 	/// No more needed
