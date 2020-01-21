@@ -91,6 +91,11 @@ void AGoKart::OnRep_ServerState()
 	engine->AddOnScreenDebugMessage(-1, 5, FColor::Green, FString::Printf(TEXT("TimeUpdate = %f"), time));*/
 
 	ClearAcknowledgeMoves(ServerState.LastMove);
+
+	for (const FGoKartMove& Move : UnacknowledgedMoves)
+	{
+		SimulateMove(Move);
+	}
 	
 }
 
@@ -105,7 +110,7 @@ void AGoKart::Tick(float DeltaTime)
 		engine->AddOnScreenDebugMessage(-1, 10, FColor::Green, TEXT("This is Only Client"));
 	}*/
 
-	FVector ViewPointLocation;
+	/*FVector ViewPointLocation;
 	FRotator ViewPointRotation;
 	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
 
@@ -120,7 +125,7 @@ void AGoKart::Tick(float DeltaTime)
 		0.f,
 		5.f
 	);
-
+*/
 
 	if (IsLocallyControlled())
 	{
@@ -174,7 +179,7 @@ void AGoKart::ClearAcknowledgeMoves(FGoKartMove LastMove)
 }
 
 
-void AGoKart::SimulateMove(FGoKartMove Move)
+void AGoKart::SimulateMove(const FGoKartMove& Move)
 {
 	FVector Force = GetActorForwardVector() * Move.Throttle * MaxDrivingForce;
 

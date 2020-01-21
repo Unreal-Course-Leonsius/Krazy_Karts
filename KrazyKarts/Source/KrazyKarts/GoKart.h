@@ -114,7 +114,7 @@ private:
 	float SteeringThrow;
 
 	TArray<FGoKartMove> UnacknowledgedMoves;
-	AGameStateBase* GameState;
+	class AGameStateBase* GameState;
 
 	UPROPERTY(ReplicatedUsing=OnRep_ServerState)
 	FGoKartState ServerState;
@@ -140,7 +140,7 @@ private:
 
 private:
 
-	void SimulateMove(FGoKartMove Move);
+	void SimulateMove(const FGoKartMove& Move);
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
