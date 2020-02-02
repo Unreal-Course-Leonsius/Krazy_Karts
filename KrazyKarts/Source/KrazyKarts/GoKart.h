@@ -4,39 +4,41 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Component/GoKartMovementComponent.h"
+#include "Component/GoKartMovementReplicator.h"
 #include "GoKart.generated.h"
 
-USTRUCT()
-struct FGoKartMove
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY()
-	float Throttle;
-	UPROPERTY()
-	float SteeringThrow;
-
-	UPROPERTY()
-	float DeltaTime;
-	UPROPERTY()
-	float Time;
-};
-
-
-USTRUCT()
-struct FGoKartState
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY()
-	FTransform Transform;
-
-	UPROPERTY()
-	FVector Velocity;
-
-	UPROPERTY()
-	FGoKartMove LastMove;
-};
+//USTRUCT()
+//struct FGoKartMove
+//{
+//	GENERATED_USTRUCT_BODY()
+//
+//	UPROPERTY()
+//	float Throttle;
+//	UPROPERTY()
+//	float SteeringThrow;
+//
+//	UPROPERTY()
+//	float DeltaTime;
+//	UPROPERTY()
+//	float Time;
+//};
+//
+//
+//USTRUCT()
+//struct FGoKartState
+//{
+//	GENERATED_USTRUCT_BODY()
+//
+//	UPROPERTY()
+//	FTransform Transform;
+//
+//	UPROPERTY()
+//	FVector Velocity;
+//
+//	UPROPERTY()
+//	FGoKartMove LastMove;
+//};
 
 UCLASS()
 class KRAZYKARTS_API AGoKart : public APawn
@@ -66,9 +68,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void ApplyRotation(float DeltaTime, float SteeringThrow);
+	/*void ApplyRotation(float DeltaTime, float SteeringThrow);
 
-	void UpdateLocationFromVelocity(float DeltaTime);
+	void UpdateLocationFromVelocity(float DeltaTime);*/
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -84,79 +86,85 @@ public:
 
 private:
 	/// Car Mass (kg)
-	UPROPERTY(EditAnywhere)
-	float Mass = 1000;
-
-	/// Force applied to the car when throttle is fully down (newton)
-	UPROPERTY(EditAnywhere)
-	float MaxDrivingForce = 10000;
-
-	/// Minimum radius of the car turning circle at full lock (m).
-	UPROPERTY(EditAnywhere)
-	float MinTurningRadius = 10;
-
-	/// Higher means more drag (kg/m)
-	UPROPERTY(EditAnywhere)
-	float DragCoefficient = 16;  // Air Resistance Coefficient
-
-	// Higher means more rolling resistance.
-	UPROPERTY(EditAnywhere)
-	float RollingResistanceCoefficient = 0.015;
-
-
-	// No more need Replicated
-	FVector Velocity;
-
-	// No more need Replication
-	float Throttle;
-
-	// No more need Replication
-	float SteeringThrow;
-
-	TArray<FGoKartMove> UnacknowledgedMoves;
-	class AGameStateBase* GameState;
-
-	UPROPERTY(ReplicatedUsing=OnRep_ServerState)
-	FGoKartState ServerState;
-	UFUNCTION()
-	void OnRep_ServerState();
-
-	/// no more need
-	//UPROPERTY(Replicated)
-	//FVector ReplicatedLocation;
-
-	//UPROPERTY(Replicated)
-	//FRotator ReplicatedRotation;
-
-
-	//UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
-	//FTransform ReplicatedTransform;
-	//UFUNCTION()
-	//void OnRep_ReplicatedTransform();
-
-	/// it's for test
-	/*UPROPERTY(Replicated)
-	FTransform RepTran;*/
-
-private:
-
-	void SimulateMove(const FGoKartMove& Move);
+//	UPROPERTY(EditAnywhere)
+//	float Mass = 1000;
+//
+//	/// Force applied to the car when throttle is fully down (newton)
+//	UPROPERTY(EditAnywhere)
+//	float MaxDrivingForce = 10000;
+//
+//	/// Minimum radius of the car turning circle at full lock (m).
+//	UPROPERTY(EditAnywhere)
+//	float MinTurningRadius = 10;
+//
+//	/// Higher means more drag (kg/m)
+//	UPROPERTY(EditAnywhere)
+//	float DragCoefficient = 16;  // Air Resistance Coefficient
+//
+//	// Higher means more rolling resistance.
+//	UPROPERTY(EditAnywhere)
+//	float RollingResistanceCoefficient = 0.015;
+//
+//
+//	// No more need Replicated
+//	FVector Velocity;
+//
+//	// No more need Replication
+//	float Throttle;
+//
+//	// No more need Replication
+//	float SteeringThrow;
+//
+//	TArray<FGoKartMove> UnacknowledgedMoves;
+//	class AGameStateBase* GameState;
+//
+//	UPROPERTY(ReplicatedUsing=OnRep_ServerState)
+//	FGoKartState ServerState;
+//	UFUNCTION()
+//	void OnRep_ServerState();
+//
+//	/// no more need
+//	//UPROPERTY(Replicated)
+//	//FVector ReplicatedLocation;
+//
+//	//UPROPERTY(Replicated)
+//	//FRotator ReplicatedRotation;
+//
+//
+//	//UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
+//	//FTransform ReplicatedTransform;
+//	//UFUNCTION()
+//	//void OnRep_ReplicatedTransform();
+//
+//	/// it's for test
+//	/*UPROPERTY(Replicated)
+//	FTransform RepTran;*/
+//
+//private:
+//
+//	void SimulateMove(const FGoKartMove& Move);
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_SendMove(FGoKartMove Move);
+	// RPC
+	/*UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SendMove(FGoKartMove Move);*/
 
 
 	void Azimuth(float Val);
 	void Elevation(float Val);
 
-	FVector GetAirResistance();
-	FVector GetRollingResistance();
+	UPROPERTY(VisibleAnywhere)
+	UGoKartMovementComponent* MovementComponent;
+	UPROPERTY(VisibleAnywhere)
+	UGoKartMovementReplicator* MovementReplicator;
 
-	FGoKartMove CreateMove(float DeltaTime);
-	void ClearAcknowledgeMoves(FGoKartMove LastMove);
+	//FVector GetAirResistance();
+	//FVector GetRollingResistance();
+
+	//FGoKartMove CreateMove(float DeltaTime);
+	//void ClearAcknowledgeMoves(FGoKartMove LastMove);
 
 
 	/// No more needed
