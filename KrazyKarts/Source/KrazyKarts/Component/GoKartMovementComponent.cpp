@@ -2,6 +2,9 @@
 
 #include "GoKartMovementComponent.h"
 
+#include "Engine/World.h"
+#include "Engine.h"
+
 
 // Sets default values for this component's properties
 UGoKartMovementComponent::UGoKartMovementComponent()
@@ -20,7 +23,7 @@ void UGoKartMovementComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-
+	GameState = GetWorld()->GetGameState();
 }
 
 
@@ -30,6 +33,11 @@ void UGoKartMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+	if (GetOwnerRole() == ROLE_AutonomousProxy || GetOwner()->GetRemoteRole() == ROLE_SimulatedProxy)
+	{
+		LastMove = CreateMove(DeltaTime);
+		SimulateMove(LastMove);
+	}
 }
 
 void UGoKartMovementComponent::SimulateMove(const FGoKartMove& Move)
@@ -54,7 +62,9 @@ FGoKartMove UGoKartMovementComponent::CreateMove(float DeltaTime)
 	Move.DeltaTime = DeltaTime;
 	Move.SteeringThrow = SteeringThrow;
 	Move.Throttle = Throttle;
-	Move.Time = GetWorld()->TimeSeconds;
+	//Move.Time = GetWorld()->TimeSeconds;
+
+	Move.Time = GameState->GetServerWorldTimeSeconds();
 
 	return Move;
 }
