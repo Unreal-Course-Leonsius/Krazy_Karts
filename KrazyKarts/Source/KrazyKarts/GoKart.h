@@ -58,10 +58,10 @@ private:
 	void Azimuth(float Val);
 	void Elevation(float Val);
 
-	UPROPERTY(VisibleAnywhere)
-	UGoKartMovementComponent* MovementComponent;
-	UPROPERTY(VisibleAnywhere)
-	UGoKartMovementReplicator* MovementReplicator;
 
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class UGoKartMovementComponent* MovementComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class UGoKartMovementReplicator* MovementReplicator;
+
 };

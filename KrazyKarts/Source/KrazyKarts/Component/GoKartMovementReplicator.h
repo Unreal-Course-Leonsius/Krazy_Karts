@@ -80,13 +80,6 @@ private:
 	void SimulatedProxy_OnRep_ServerState();
 
 
-	float ClientTimeSinceUpdate;
-	float ClientTimeBetweenLastUpdates;
-	FTransform ClientStartTransform;
-	FVector ClientStartVelocity;
-
-private:
-
 	void UpdateServerState(const FGoKartMove& Move);
 
 private:
@@ -95,5 +88,20 @@ private:
 
 	UPROPERTY()
 	UGoKartMovementComponent* MovementComponent;
+
+	UPROPERTY()
+	USceneComponent* MeshOffsetRoot;
+
+	float ClientTimeSinceUpdate;
+	float ClientTimeBetweenLastUpdates;
+	FTransform ClientStartTransform;
+	FVector ClientStartVelocity;
+
+	float ClientSimulatedTime;
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	void SetMeshOffsetRoot(USceneComponent* Root) { MeshOffsetRoot = Root; }
 
 };
